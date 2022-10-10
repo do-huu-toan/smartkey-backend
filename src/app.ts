@@ -3,11 +3,15 @@ import UserController from "./controller/user";
 import {
   createExpressServer,
   getMetadataArgsStorage,
+  useContainer 
 } from "routing-controllers";
 import { validationMetadatasToSchemas } from "class-validator-jsonschema";
 const { defaultMetadataStorage } = require("class-transformer/cjs/storage");
 import { routingControllersToSpec } from "routing-controllers-openapi";
 import * as swaggerUiExpress from 'swagger-ui-express'
+import { Container } from 'typedi';
+
+
 class App {
   public express: Application;
   public port: number;
@@ -21,8 +25,8 @@ class App {
     this.port = port;
     this.initController();
     this.initSwagger();
+    this.useContainer();
   }
-
   private initController(): void {
     this.express = createExpressServer(this.routingControllersOptions);
   }
@@ -56,6 +60,9 @@ class App {
     this.express.get('', (_req, res) => {
       res.json(spec)
     })
+  }
+  private useContainer(){
+    useContainer(Container);
   }
   public listen(): void {
     this.express.listen(this.port, () => {
