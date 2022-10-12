@@ -1,11 +1,10 @@
-import { Service } from "typedi";
-import { DbContext } from "../../entity/datasource";
 import { Users } from "../../entity/Users";
+import { Service } from "typedi";
+import { DbContext as _context } from "../../entity/datasource";
 @Service()
 class UserService {
-    private _context = DbContext;
-    getAllUser = async () => {
-        return await this._context.getRepository(Users).find();
-    }
+  getAllUser = () => {
+    return _context.getRepository(Users).find();
+  };
 }
 export default UserService;
