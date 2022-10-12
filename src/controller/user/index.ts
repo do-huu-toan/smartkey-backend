@@ -3,7 +3,7 @@ import Controller from "@/utils/interface/controller.interface";
 import UserService from "../../service/user";
 import { Get, JsonController } from "routing-controllers";
 import { OpenAPI } from "routing-controllers-openapi";
-import { Container, Service } from 'typedi';
+import { Service } from 'typedi';
 
 
 @JsonController("/users")
@@ -18,8 +18,8 @@ class UserController implements Controller {
     summary: "API lấy tất cả users",
     description: "Created: DHTOAN - 10/10/2022",
   })
-  getUser = () => {
-    return this.userService.getAllUser();
+  getUser = async () => {
+    return await this.userService.getAllUser();
   }
 }
 export default UserController;

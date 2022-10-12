@@ -10,19 +10,24 @@ const { defaultMetadataStorage } = require("class-transformer/cjs/storage");
 import { routingControllersToSpec } from "routing-controllers-openapi";
 import * as swaggerUiExpress from 'swagger-ui-express'
 import { Container } from 'typedi';
-
+import { SampleMiddleware } from "./middleware/sample";
+import "reflect-metadata"
+import { DbContext } from "./entity/datasource";
+import DeviceController from "./controller/device";
 
 class App {
   public express: Application;
   public port: number;
   private routingControllersOptions = {
     routePrefix: "/api/v1",
-    controllers: [UserController], // we specify controllers we want to use
+    controllers: [UserController, DeviceController], // we specify controllers we want to use
+    middlewares: [SampleMiddleware],
   };
-  constructor(port: number) {
+    constructor(port: number) {
     //variable
     this.express = express();
     this.port = port;
+    this.initDatabase();
     this.initController();
     this.initSwagger();
     this.useContainer();
@@ -63,6 +68,15 @@ class App {
   }
   private useContainer(){
     useContainer(Container);
+  }
+  private async initDatabase(){
+    try{
+      await DbContext.initialize()
+      console.log("Connect database successful");
+    }
+    catch(ex){
+      console.log(ex);
+    }
   }
   public listen(): void {
     this.express.listen(this.port, () => {
