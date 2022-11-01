@@ -1,11 +1,15 @@
 import { Service } from "typedi";
-import { DbContext } from "../../entity/datasource";
+import { DbContext as _context } from "../../entity/datasource";
 import { Devices } from "../../entity/Devices";
 @Service()
 class DeviceService {
-    private _context = DbContext;
-    getAllDevice = async () => {
-        return await this._context.getRepository(Devices).find();
-    }
+  getAllDevice = async () => {
+    return await _context.getRepository(Devices).find();
+  };
+  getDeviceByUserId = async (userId: string) => {
+    return await _context.getRepository(Devices).findBy({
+      userId: userId,
+    });
+  };
 }
 export default DeviceService;

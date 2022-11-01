@@ -1,29 +1,38 @@
 import express, { Application } from "express";
 import UserController from "./controller/user";
+import DeviceController from "./controller/device";
+import RoleController from "./controller/role";
 import {
   createExpressServer,
   getMetadataArgsStorage,
-  useContainer 
+  useContainer,
 } from "routing-controllers";
 import { validationMetadatasToSchemas } from "class-validator-jsonschema";
 const { defaultMetadataStorage } = require("class-transformer/cjs/storage");
 import { routingControllersToSpec } from "routing-controllers-openapi";
-import * as swaggerUiExpress from 'swagger-ui-express'
-import { Container } from 'typedi';
+import * as swaggerUiExpress from "swagger-ui-express";
+import { Container } from "typedi";
 import { SampleMiddleware } from "./middleware/sample";
-import "reflect-metadata"
+import "reflect-metadata";
 import { DbContext } from "./entity/datasource";
-import DeviceController from "./controller/device";
+import AuthController from "./controller/auth";
+
 
 class App {
   public express: Application;
   public port: number;
   private routingControllersOptions = {
+    cors: true,
     routePrefix: "/api/v1",
-    controllers: [UserController, DeviceController], // we specify controllers we want to use
+    controllers: [
+      UserController,
+      RoleController,
+      DeviceController,
+      AuthController,
+    ], // we specify controllers we want to use
     middlewares: [SampleMiddleware],
   };
-    constructor(port: number) {
+  constructor(port: number) {
     //variable
     this.express = express();
     this.port = port;
@@ -44,37 +53,44 @@ class App {
 
     // Parse routing-controllers classes into OpenAPI spec:
     const storage = getMetadataArgsStorage();
-    const spec = routingControllersToSpec(storage, this.routingControllersOptions, {
-      components: {
-        schemas,
-        securitySchemes: {
-          basicAuth: {
-            scheme: "basic",
-            type: "http",
+    const spec = routingControllersToSpec(
+      storage,
+      this.routingControllersOptions,
+      {
+        components: {
+          schemas,
+          securitySchemes: {
+            basicAuth: {
+              scheme: "basic",
+              type: "http",
+            },
           },
         },
-      },
-      info: {
-        description: "Generated with `DHTOAN`",
-        title: "API Swagger Document",
-        version: "1.0.0",
-      },
-    });
+        info: {
+          description: "Generated with `DHTOAN`",
+          title: "API Swagger Document",
+          version: "1.0.0",
+        },
+      }
+    );
 
-    this.express.use("/docs", swaggerUiExpress.serve, swaggerUiExpress.setup(spec));
-    this.express.get('', (_req, res) => {
-      res.json(spec)
-    })
+    this.express.use(
+      "/docs",
+      swaggerUiExpress.serve,
+      swaggerUiExpress.setup(spec)
+    );
+    // this.express.get("", (_req, res) => {
+    //   res.json(spec);
+    // });
   }
-  private useContainer(){
+  private useContainer() {
     useContainer(Container);
   }
-  private async initDatabase(){
-    try{
-      await DbContext.initialize()
+  private async initDatabase() {
+    try {
+      await DbContext.initialize();
       console.log("Connect database successful");
-    }
-    catch(ex){
+    } catch (ex) {
       console.log(ex);
     }
   }

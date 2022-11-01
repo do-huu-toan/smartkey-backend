@@ -1,25 +1,25 @@
 import { Router, Request, Response } from "express";
 import Controller from "@/utils/interface/controller.interface";
-import UserService from "../../service/user";
+import RoleService from "../../service/role";
 import { Get, JsonController } from "routing-controllers";
 import { OpenAPI } from "routing-controllers-openapi";
 import { Service } from 'typedi';
 
 
-@JsonController("/users")
+@JsonController("/role")
 @Service()
-class UserController implements Controller {
-  path: string = "/user";
+class RoleController implements Controller {
+  path: string = "/role";
   router: Router = Router();
-  constructor(private userService: UserService) {
+  constructor(private roleService: RoleService) {
   }
   @Get("/")
   @OpenAPI({
-    summary: "API lấy tất cả users",
+    summary: "API lấy tất cả role",
     description: "Created: DHTOAN - 10/10/2022",
   })
-  async getUser(){
-    return await this.userService.getAllUser();
+  getRole = async () => {
+    return await this.roleService.getAllRole();
   }
 }
-export default UserController;
+export default RoleController;
