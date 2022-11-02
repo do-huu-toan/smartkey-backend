@@ -79,9 +79,6 @@ class App {
       swaggerUiExpress.serve,
       swaggerUiExpress.setup(spec)
     );
-    // this.express.get("", (_req, res) => {
-    //   res.json(spec);
-    // });
   }
   private useContainer() {
     useContainer(Container);

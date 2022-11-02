@@ -11,6 +11,7 @@ import { Roles } from "./Roles";
 
 @Index("id", ["id"], { unique: true })
 @Index("usename", ["usename"], { unique: true })
+@Index("IDX_d23535658503099d5c0e6661fe", ["usename"], { unique: true })
 @Index("roleId", ["roleId"], {})
 @Entity("users", { schema: "iot-system" })
 export class Users {

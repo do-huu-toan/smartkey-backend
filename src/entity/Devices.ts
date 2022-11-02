@@ -2,13 +2,14 @@ import { Column, Entity, Index, JoinColumn, ManyToOne } from "typeorm";
 import { Users } from "./Users";
 
 @Index("id", ["id"], { unique: true })
+@Index("name", ["name"], { unique: true })
 @Index("userId", ["userId"], {})
 @Entity("devices", { schema: "iot-system" })
 export class Devices {
   @Column("char", { primary: true, name: "id", length: 36 })
   id: string;
 
-  @Column("varchar", { name: "name", length: 255 })
+  @Column("varchar", { name: "name", unique: true, length: 255 })
   name: string;
 
   @Column("datetime", { name: "createdAt" })
