@@ -16,7 +16,7 @@ import { SampleMiddleware } from "./middleware/sample";
 import "reflect-metadata";
 import { DbContext } from "./entity/datasource";
 import AuthController from "./controller/auth";
-
+import authorize from "./service/auth/authorize"
 
 class App {
   public express: Application;
@@ -31,6 +31,8 @@ class App {
       AuthController,
     ], // we specify controllers we want to use
     middlewares: [SampleMiddleware],
+    authorizationChecker: authorize.authorizationChecker,
+    development: true
   };
   constructor(port: number) {
     //variable
@@ -60,9 +62,11 @@ class App {
         components: {
           schemas,
           securitySchemes: {
-            basicAuth: {
-              scheme: "basic",
+            bearerAuth: {
+              name: "authorization",
               type: "http",
+              scheme: "bearer",
+              in: "header",
             },
           },
         },

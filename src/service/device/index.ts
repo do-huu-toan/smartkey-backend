@@ -17,6 +17,7 @@ class DeviceService {
       id: uuidv4(),
       name: name,
       userId: userId,
+      createdAt: new Date()
     });
   };
 }

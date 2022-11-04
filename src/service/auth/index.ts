@@ -16,7 +16,7 @@ class AuthService {
           id: user.id,
           username: user.usename,
         },
-        "dohuutoannb",
+        String(process.env.JWTSECRETKEY),
         { expiresIn: "1h" }
       );
       return {
