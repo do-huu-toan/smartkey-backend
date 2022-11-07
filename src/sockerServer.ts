@@ -84,8 +84,11 @@ class SocketServer {
     socket.emit("eventDeviceOnline", devicesOnline);
   }
   public handleControlDevice(socket: any){
-    socket.on("control", function(data: object){
-      console.log(data)
+    var self = this;
+    socket.on("control", function(data: any){
+      var deviceId = data.id;
+      var socketId: any = self.memCache.get(`device/${deviceId}/${socket.handshake.query.userId}`)
+      if(socketId != null) self.ioDevice.to(socketId).emit("userControl", data.value)
     })
   }
   //Handle On
