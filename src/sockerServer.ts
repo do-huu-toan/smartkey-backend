@@ -3,6 +3,8 @@ import memoryCache from "memory-cache";
 import { DbContext as _context } from "./entity/datasource";
 import { Devices } from "./entity/Devices";
 import * as jwt from "jsonwebtoken";
+import { Logs } from "./entity/Logs";
+import { v4 as uuidv4 } from "uuid";
 class SocketServer {
   private io: Server;
   private memCache = new memoryCache.Cache();
@@ -29,7 +31,10 @@ class SocketServer {
           String(process.env.JWTSECRETKEY)
         );
         socket.handshake.query.userId = payload.id;
-        self.memCache.put(`user/${socket.handshake.query.userId}/${socket.id}`, socket.id);
+        self.memCache.put(
+          `user/${socket.handshake.query.userId}/${socket.id}`,
+          socket.id
+        );
         next();
       } catch (error) {
         next(new Error("Unauthorized"));
@@ -57,7 +62,7 @@ class SocketServer {
             `device/${socket.handshake.query.token}/${device[0].userId}`,
             {
               socketId: socket.id,
-              status: false
+              status: false,
             }
           );
           socket.handshake.query.userId = device[0].userId;
@@ -70,8 +75,9 @@ class SocketServer {
   }
   public listenIODevice() {
     this.ioDevice.on("connection", (socket) => {
+      console.log("1 device connected");
       //Gửi cho brower biết có thiết bị kết nối
-      this.handleDeviceConnected(socket)
+      this.handleDeviceConnected(socket);
       //Khi thiết bị được bật/tắt từ phần cứng
       this.handleMessageFromDevice(socket);
       socket.on("disconnect", () => {
@@ -82,9 +88,9 @@ class SocketServer {
       });
     });
   }
-  
+
   //Handle Emit
-  public handleDeviceConnected(socket: any){
+  public handleDeviceConnected(socket: any) {
     const devicesOnlineKey = this.memCache.keys().filter((key: any) => {
       return (
         key.startsWith("device/") &&
@@ -92,20 +98,18 @@ class SocketServer {
       );
     });
     const data = [];
-    for(var deviceKey of devicesOnlineKey){
+    for (var deviceKey of devicesOnlineKey) {
       data.push({
         key: deviceKey,
-        status: this.memCache.get(deviceKey)
-      })
+        status: this.memCache.get(deviceKey),
+      });
     }
     const userOnline: any = this.memCache.keys().filter((key: any) => {
-      return(
-        key.startsWith(`user/${socket.handshake.query.userId}`)
-      )
-    })
-    for(var userCacheKey of userOnline) {
+      return key.startsWith(`user/${socket.handshake.query.userId}`);
+    });
+    for (var userCacheKey of userOnline) {
       let socketId: any = this.memCache.get(userCacheKey);
-      this.io.to(socketId).emit('eventDeviceOnline', data);
+      this.io.to(socketId).emit("eventDeviceOnline", data);
     }
   }
   public handleEmitDeviceOnline(socket: any) {
@@ -116,47 +120,80 @@ class SocketServer {
       );
     });
     const data = [];
-    for(var deviceKey of devicesOnlineKey){
+    for (var deviceKey of devicesOnlineKey) {
       data.push({
         key: deviceKey,
-        status: this.memCache.get(deviceKey)
-      })
+        status: this.memCache.get(deviceKey),
+      });
     }
     socket.emit("eventDeviceOnline", data);
   }
-  public handleControlDevice(socket: any){
+  public handleControlDevice(socket: any) {
     var self = this;
-    socket.on("control", function(data: any){
+    socket.on("control", function (data: any) {
       var deviceId = data.id;
-      var cache: any = self.memCache.get(`device/${deviceId}/${socket.handshake.query.userId}`)
-      if(cache != null) {
-        self.ioDevice.to(cache.socketId).emit("userControl", data.value)
+      var cache: any = self.memCache.get(
+        `device/${deviceId}/${socket.handshake.query.userId}`
+      );
+      if (cache != null) {
+        self.ioDevice.to(cache.socketId).emit("userControl", data.value);
         cache.status = data.value;
-        self.memCache.put(`device/${deviceId}/${socket.handshake.query.userId}`, cache)
+        self.memCache.put(
+          `device/${deviceId}/${socket.handshake.query.userId}`,
+          cache
+        );
       }
-    })
+    });
   }
   //Handle On
-  public handleMessageFromDevice(socket: any){
+  public async handleMessageFromDevice(socket: any) {
     var self = this;
-    socket.on("onChange", function(data: any){
+    socket.on("onChange", function (data: any) {
+      // console.log("onChange1: ", typeof(data));
       var deviceId = socket.handshake.query.token;
-      var data = data;
+      var data: any = String(data);
+      // console.log("onChange2: ", data);
       var userId = socket.handshake.query.userId;
-      var keyCaches: any = self.memCache.keys().filter((key: any) => key.startsWith(`user/${userId}`));
-      if(keyCaches.length > 0) {
-        for(let key of keyCaches){
+      // console.log(userId);
+      var keyCaches: any = self.memCache
+        .keys()
+        .filter((key: any) => key.startsWith(`user/${userId}`));
+      // console.log(keyCaches);
+      if (keyCaches.length > 0) {
+        for (let key of keyCaches) {
           let socketId: any = self.memCache.get(key);
-          var cache: any = self.memCache.get(`device/${deviceId}/${userId}`)
-          cache.status = data;
-          self.memCache.put(`device/${deviceId}/${userId}`,cache);
-          self.io.to(socketId).emit('statusDeviceChange', {
+          var cache: any = self.memCache.get(`device/${deviceId}/${userId}`);
+           if(cache != null)
+          {
+            cache.status = data;
+            self.memCache.put(`device/${deviceId}/${userId}`, cache);
+          }
+          self.io.to(socketId).emit("statusDeviceChange", {
             key: `device/${deviceId}/${userId}`,
-            status: data
-          })
+            status: data,
+          });
         }
       }
-    })
+      //Lưu db
+      if(data == "true"){
+        var device = _context
+        .getRepository(Devices)
+        .findOneBy({
+          id: deviceId,
+        })
+        .then((device) => {
+          _context.getRepository(Logs).save({
+            id: uuidv4(),
+            device: device != null && device != undefined ? device.name : null,
+            createdAt: new Date(),
+            content: "Mở khóa",
+            userId: userId
+          });
+        })
+        .catch(() => {});
+      }
+      
+    });
   }
 }
 export default SocketServer;

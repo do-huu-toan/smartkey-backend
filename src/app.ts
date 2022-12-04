@@ -17,6 +17,7 @@ import "reflect-metadata";
 import { DbContext } from "./entity/datasource";
 import AuthController from "./controller/auth";
 import authorize from "./service/auth/authorize"
+import LogController from "./controller/log";
 
 class App {
   public express: Application;
@@ -29,6 +30,7 @@ class App {
       RoleController,
       DeviceController,
       AuthController,
+      LogController
     ], // we specify controllers we want to use
     middlewares: [SampleMiddleware],
     authorizationChecker: authorize.authorizationChecker,
